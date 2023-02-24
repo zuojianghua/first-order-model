@@ -1,14 +1,18 @@
-FROM nvcr.io/nvidia/cuda:10.0-cudnn7-runtime-ubuntu18.04
+FROM nvcr.io/nvidia/pytorch:23.01-py3
+WORKDIR /workspace
+USER root
+EXPOSE 8800
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=Asia/Shanghai
+RUN apt-get update && apt-get upgrade -y && apt-get install git -y && apt-get install ffmpeg -y
+RUN apt-get install -y vim && apt-get install -y gcc && apt-get install -y g++ && apt-get install -y cmake
 
-RUN DEBIAN_FRONTEND=noninteractive apt-get -qq update \
- && DEBIAN_FRONTEND=noninteractive apt-get -qqy install python3-pip ffmpeg git less nano libsm6 libxext6 libxrender-dev \
- && rm -rf /var/lib/apt/lists/*
+# Keeps Python from generating .pyc files in the container
+# ENV PYTHONDONTWRITEBYTECODE=1
+# Turns off buffering for easier container logging
+ENV PYTHONUNBUFFERED=1
 
-COPY . /app/
-WORKDIR /app
-
-RUN pip3 install --upgrade pip
-RUN pip3 install \
-  https://download.pytorch.org/whl/cu100/torch-1.0.0-cp36-cp36m-linux_x86_64.whl \
-  git+https://github.com/1adrianb/face-alignment \
-  -r requirements.txt
+COPY . /workspace
+# Install pip requirements
+RUN pip install -r requirements.txt
+ENTRYPOINT ["jupyter-lab","--no-browser","--allow-root","--port=8800","--ip=0.0.0.0"]
